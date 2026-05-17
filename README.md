@@ -58,154 +58,113 @@ This is a fork of [theorzr/mc173](https://github.com/theorzr/mc173) with critica
 
 ### Step 1: Install Rust on your PC (WSL or Linux)
 
-Open terminal and run:
+Open a terminal and run the official Rust installation script. When prompted, select option 1: "Proceed with installation (default)". After installation, reload your shell.
 
-```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-When prompted, select option 1: "Proceed with installation (default)"
+Verify Rust is installed by checking versions of rustc and cargo.
 
-After installation, reload your shell:
+### Step 2: Install ARM cross-compilation target
 
-bash
-source ~/.cargo/env
-Verify Rust is installed:
+Use rustup to add the target: armv7-unknown-linux-gnueabihf. Verify the target is installed by listing installed targets.
 
-bash
-rustc --version
-cargo --version
-Expected output example:
+### Step 3: Install GCC cross-compiler for ARM
 
-text
-rustc 1.85.0 (some date)
-cargo 1.85.0 (some date)
-Step 2: Install ARM cross-compilation target
-bash
-rustup target add armv7-unknown-linux-gnueabihf
-Verify target is added:
+On Ubuntu/Debian, install gcc-arm-linux-gnueabihf via apt. Verify with version check.
 
-bash
-rustup target list | grep armv7
-You should see armv7-unknown-linux-gnueabihf (installed)
+### Step 4: Clone this repository
 
-Step 3: Install GCC cross-compiler for ARM
-bash
-sudo apt update
-sudo apt install gcc-arm-linux-gnueabihf
-Verify installation:
+Clone the repository using git clone and enter the directory.
 
-bash
-arm-linux-gnueabihf-gcc --version
-Expected output: arm-linux-gnueabihf-gcc (Ubuntu 13.3.0-...) 13.3.0
+### Step 5: Configure Cargo for cross-compilation
 
-Step 4: Clone this repository
-bash
-git clone https://github.com/ballslober12/mc173-webos.git
-cd mc173-webos
-Step 5: Configure Cargo for cross-compilation
-Create a file .cargo/config.toml in the project root:
+Create a .cargo/config.toml file in the project root with the linker set to arm-linux-gnueabihf-gcc.
 
-bash
-mkdir -p .cargo
-cat > .cargo/config.toml << 'EOF'
-[target.armv7-unknown-linux-gnueabihf]
-linker = "arm-linux-gnueabihf-gcc"
-EOF
-Step 6: Build the server (DYNAMIC build)
-bash
-cargo build --release --target armv7-unknown-linux-gnueabihf
-This will take 2-5 minutes. The binary will be approximately 4-5 MB.
+### Step 6: Build the server (DYNAMIC build)
 
-Step 7: Build the server (STATIC build - RECOMMENDED for LG TV)
-Static build requires musl target:
+Run cargo build with --release and --target armv7-unknown-linux-gnueabihf. Build takes 2-5 minutes. Binary size is approximately 4-5 MB.
 
-bash
-rustup target add armv7-unknown-linux-musleabihf
-cargo build --release --target armv7-unknown-linux-musleabihf
-The static binary will be approximately 10-15 MB but runs on ANY ARM Linux without external libraries.
+### Step 7: Build the server (STATIC build - RECOMMENDED for LG TV)
 
-Step 8: Locate the compiled binary
-For dynamic build:
+Add the musl target: armv7-unknown-linux-musleabihf. Then build with cargo. Static binary size is approximately 10-15 MB but runs on any ARM Linux without external libraries.
 
-bash
-ls -lh target/armv7-unknown-linux-gnueabihf/release/mc173-server
-For static build:
+### Step 8: Locate the compiled binary
 
-bash
-ls -lh target/armv7-unknown-linux-musleabihf/release/mc173-server
-Step 9: Check binary architecture (important!)
-bash
-file target/armv7-unknown-linux-gnueabihf/release/mc173-server
-Expected output should contain: ELF 32-bit LSB executable, ARM
+The dynamic binary is located at target/armv7-unknown-linux-gnueabihf/release/mc173-server. The static binary is at target/armv7-unknown-linux-musleabihf/release/mc173-server.
 
-If it shows x86-64 - wrong build. Check Step 2 and Step 5.
+### Step 9: Check binary architecture (important!)
 
-Step 10: Copy binary to USB drive
-Assuming your USB drive is mounted at /mnt/e/:
+Use the file command on the binary. Expected output must contain: ELF 32-bit LSB executable, ARM. If it shows x86-64, the build target is wrong — check Step 2 and Step 5.
 
-bash
-cp target/armv7-unknown-linux-gnueabihf/release/mc173-server /mnt/e/
-If your USB has different mount point, check with:
+### Step 10: Copy binary to USB drive
 
-bash
-ls /mnt/
-Common mount points: /mnt/d/, /mnt/f/, /media/username/
+Copy the binary from the target folder to your USB drive (common mount points: /mnt/e/, /mnt/d/, /mnt/f/, /media/username/).
 
-Running on TV
-Step 1: Copy binary from USB to TV
-On LG TV via SSH:
 
-bash
-cd /home/root
-mkdir -p minecraft_server
-cd minecraft_server
-cp /media/internal/mc173-server .
-Note: USB path may vary. Common paths on LG TV:
+## Running on TV
 
-/media/internal/
+### Step 1: Copy binary from USB to TV
 
-/media/usb0/
+Over SSH, navigate to /home/root, create a minecraft_server directory, and copy the binary from the USB path. Common USB paths on LG TV: /media/internal/, /media/usb0/, /tmp/usb/.
 
-/tmp/usb/
+### Step 2: Make binary executable
 
-Step 2: Make binary executable
-bash
-chmod +x mc173-server
-Step 3: Run the server
-bash
-./mc173-server
-Step 4: Expected output
-If successful, you will see:
+Use chmod +x on the binary.
 
-text
-INFO server bound to 0.0.0.0:25565
-DEBUG loaded chunk from storage: -10/-10
-DEBUG loaded chunk from storage: -10/-9
-...
-Step 5: If "not found" error
-If you get -sh: ./mc173-server: not found, try:
+### Step 3: Run the server
 
-bash
-/lib/ld-linux.so.3 ./mc173-server
-Or create a symlink:
+Execute the binary with ./mc173-server.
 
-bash
-ln -s /lib/ld-linux.so.3 /lib/ld-linux-armhf.so.3
-./mc173-server
-Step 6: Keep server running in background
-bash
-nohup ./mc173-server > server.log 2>&1 &
-To view logs:
+### Step 4: Expected output
 
-bash
-tail -f server.log
-To stop server:
+If successful, you will see a log line: server bound to 0.0.0.0:25565 followed by chunk loading messages.
 
-bash
-pkill mc173-server
-Connecting from PC
-Step 1: Find TV IP address
-On TV via SSH:
+### Step 5: If "not found" error
 
-bash
-ip addr show | grep "inet "
-Look for something like 192.168.1.100
+If you get "-sh: ./mc173-server: not found", try running with the dynamic linker directly: /lib/ld-linux.so.3 ./mc173-server. Alternatively, create a symlink to /lib/ld-linux.so.3.
+
+### Step 6: Keep server running in background
+
+Use nohup to run the server in the background and redirect output to a log file. View logs with tail. Stop the server with pkill mc173-server.
+
+
+## Connecting from PC
+
+### Step 1: Find TV IP address
+
+On the TV via SSH, use ip addr show and look for an address like 192.168.1.100.
+
+Launch Minecraft Beta 1.7.3 on your PC, click Multiplayer, then Direct Connect, and enter the TV's IP address followed by port 25565 (e.g., 192.168.1.100:25565).
+
+
+## Commands
+
+Supported in-game commands (type in chat with / prefix):
+
+- /help - Show available commands
+- /give <player> <item> [amount] - Give an item
+- /gamemode <0/1> [player] - Change game mode
+- /time <set/add> <value> - Change time of day
+- /stop - Stop the server
+- /list - List online players
+
+
+## Troubleshooting
+
+**Q: Binary says "not found" even though it exists**  
+A: Missing dynamic libraries. Use the static build (Step 7) or run with /lib/ld-linux.so.3.
+
+**Q: Client connects but immediately disconnects**  
+A: Check that entity_id fix is present in your build (it's in this fork). Also ensure keepalive packets are being sent.
+
+**Q: "Address already in use"**  
+A: Another process is using port 25565. Kill it with pkill mc173-server or change the port in source code.
+
+**Q: World not saving**  
+A: Ensure the server has write permissions to the directory. Run chmod 755 on the server folder.
+
+**Q: High CPU usage on TV**  
+A: Reduce view distance in server.properties (set to 4 or 5). Also verify that only 1 chunk per tick is being sent (this fix is included).
+
+
+## Original Project
+
+This fork is based on [theorzr/mc173](https://github.com/theorzr/mc173). All credit for the original Minecraft Beta 1.7.3 server implementation goes to the original author. This fork only adds ARMv7/LG webOS compatibility fixes.
