@@ -700,12 +700,11 @@ impl World {
     // =================== //
 
     /// Inner function to used to elide generics.
-    fn spawn_entity_inner(&mut self, entity: Arc<Entity>) -> u32 {
-
-        // Get the next unique entity id.
-        let id = self.entities_count;
-        self.entities_count = self.entities_count.checked_add(1)
-            .expect("entity count overflow");
+fn spawn_entity_inner(&mut self, entity: Arc<Entity>) -> u32 {
+    // Get the next unique entity id, starting from 1
+    let id = self.entities_count + 1;
+    self.entities_count = self.entities_count.checked_add(1)
+        .expect("entity count overflow");
 
         let kind = entity.kind();
         trace!("spawn entity #{id} ({:?})", kind);
