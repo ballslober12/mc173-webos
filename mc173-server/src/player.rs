@@ -1411,54 +1411,39 @@ impl ServerPlayer {
     }
 
     /// Update the chunks sent to this player.
-    pub fn update_chunks(&mut self, sw: &ServerWorld) {
-
-        let (ocx, ocz) = chunk::calc_entity_chunk_pos(self.pos);
-        let view_range = 3;
-
-        for cx in (ocx - view_range)..(ocx + view_range) {
-            for cz in (ocz - view_range)..(ocz + view_range) {
-
-                if let Some(chunk) = sw.world.get_chunk(cx, cz) {
-                    if self.tracked_chunks.insert((cx, cz)) {
-
-                        self.send(OutPacket::ChunkState(proto::ChunkStatePacket {
-                            cx, cz, init: true
-                        }));
-
-                        let from = IVec3 {
-                            x: cx * 16,
-                            y: 0,
-                            z: cz * 16,
-                        };
-
-                        let size = IVec3 { 
-                            x: 16, 
-                            y: 128, 
-                            z: 16,
-                        };
-
-                        self.send(OutPacket::ChunkData(new_chunk_data_packet(chunk, from, size)));
-
-                    }
-                }
-
-                // Search signs block entities in chunk.
-                for (pos, block_entity) in sw.world.iter_block_entities_in_chunk(cx, cz) {
-                    if let BlockEntity::Sign(sign) = block_entity {
-                        self.send(OutPacket::UpdateSign(proto::UpdateSignPacket {
-                            x: pos.x,
-                            y: pos.y as i16,
-                            z: pos.z,
-                            lines: sign.lines.clone(),
-                        }));
-                    }
-                }
-
+pub fn update_chunks(&mut self, sw: &ServerWorld) {
+    eprintln!("[DEBUG] update_chunks called");
+    let (ocx, ocz) = chunk::calc_entity_chunk_pos(self.pos);
+    let view_range = 3;
+    
+    // Сортируем чанки: сначала центральный, потом по удалению
+    let mut chunks_to_send: Vec<(i32, i32, i32)> = Vec::new();
+    for cx in (ocx - view_range)..(ocx + view_range) {
+        for cz in (ocz - view_range)..(ocz + view_range) {
+            if !self.tracked_chunks.contains(&(cx, cz)) {
+                let dist = (cx - ocx).abs() + (cz - ocz).abs();
+                chunks_to_send.push((cx, cz, dist));
             }
         }
-
     }
+    chunks_to_send.sort_by_key(|(_, _, dist)| *dist);
+    
+    if let Some((cx, cz, _)) = chunks_to_send.first() {
+        let cx = *cx;
+        let cz = *cz;
+        if let Some(chunk) = sw.world.get_chunk(cx, cz) {
+            self.tracked_chunks.insert((cx, cz));
+            self.send(OutPacket::ChunkState(proto::ChunkStatePacket {
+                cx, cz, init: true
+            }));
+            
+            let from = IVec3 { x: cx * 16, y: 0, z: cz * 16 };
+            let size = IVec3 { x: 16, y: 128, z: 16 };
+            self.send(OutPacket::ChunkData(new_chunk_data_packet(chunk, from, size)));
+            eprintln!("[DEBUG] Sent chunk ({}, {})", cx, cz);
+        }
+    }
+}
 
     /// Make this player pickup an item stack, the stack and its size is modified 
     /// regarding the amount actually picked up.

@@ -928,13 +928,15 @@ impl net::OutPacket for OutPacket {
         
         match self {
             OutPacket::KeepAlive => write.write_u8(0)?,
-            OutPacket::Login(packet) => {
-                write.write_u8(1)?;
-                write.write_java_int(packet.entity_id as i32)?;
-                write.write_java_string16("")?; // No username it sent to the client.
-                write.write_java_long(packet.random_seed)?;
-                write.write_java_byte(packet.dimension)?;
-            }
+OutPacket::Login(packet) => {
+    eprintln!("[DEBUG] Sending Login packet: entity_id={}, seed={}, dimension={}", 
+        packet.entity_id, packet.random_seed, packet.dimension);
+    write.write_u8(1)?;
+    write.write_java_int(packet.entity_id as i32)?;
+    write.write_java_string16("")?;
+    write.write_java_long(packet.random_seed)?;
+    write.write_java_byte(packet.dimension)?;
+}
             OutPacket::Handshake(packet) => {
                 write.write_u8(2)?;
                 write.write_java_string16(&packet.server)?;
@@ -944,10 +946,11 @@ impl net::OutPacket for OutPacket {
                 let (s, _) = split_at_utf8_boundary(&packet.message, packet.message.len().min(119));
                 write.write_java_string16(s)?;
             }
-            OutPacket::UpdateTime(packet) => {
-                write.write_u8(4)?;
-                write.write_java_long(packet.time as i64)?;
-            }
+OutPacket::UpdateTime(packet) => {
+    eprintln!("[DEBUG] Sending UpdateTime: time={}", packet.time);
+    write.write_u8(4)?;
+    write.write_java_long(packet.time as i64)?;
+}
             OutPacket::PlayerInventory(packet) => {
                 write.write_u8(5)?;
                 write.write_java_int(packet.entity_id as i32)?;
@@ -960,12 +963,13 @@ impl net::OutPacket for OutPacket {
                     write.write_java_short(0)?;
                 }
             }
-            OutPacket::SpawnPosition(packet)=> {
-                write.write_u8(6)?;
-                write.write_java_int(packet.pos.x)?;
-                write.write_java_int(packet.pos.y)?;
-                write.write_java_int(packet.pos.z)?;
-            }
+			OutPacket::SpawnPosition(packet) => {
+    eprintln!("[DEBUG] Sending SpawnPosition: x={}, y={}, z={}", packet.pos.x, packet.pos.y, packet.pos.z);
+    write.write_u8(6)?;
+    write.write_java_int(packet.pos.x)?;
+    write.write_java_int(packet.pos.y)?;
+    write.write_java_int(packet.pos.z)?;
+}
             OutPacket::UpdateHealth(packet) => {
                 write.write_u8(8)?;
                 write.write_java_short(packet.health)?;
@@ -992,16 +996,18 @@ impl net::OutPacket for OutPacket {
                 write.write_java_float(packet.look.y)?;
                 write.write_java_boolean(packet.on_ground)?;
             }
-            OutPacket::PositionLook(packet) => {
-                write.write_u8(13)?;
-                write.write_java_double(packet.pos.x)?;
-                write.write_java_double(packet.pos.y)?;
-                write.write_java_double(packet.stance)?;
-                write.write_java_double(packet.pos.z)?;
-                write.write_java_float(packet.look.x)?;
-                write.write_java_float(packet.look.y)?;
-                write.write_java_boolean(packet.on_ground)?;
-            }
+OutPacket::PositionLook(packet) => {
+    eprintln!("[DEBUG] Sending PositionLook: pos=({},{},{}), look=({},{}), stance={}, on_ground={}", 
+        packet.pos.x, packet.pos.y, packet.pos.z, packet.look.x, packet.look.y, packet.stance, packet.on_ground);
+    write.write_u8(13)?;
+    write.write_java_double(packet.pos.x)?;
+    write.write_java_double(packet.pos.y)?;
+    write.write_java_double(packet.stance)?;
+    write.write_java_double(packet.pos.z)?;
+    write.write_java_float(packet.look.x)?;
+    write.write_java_float(packet.look.y)?;
+    write.write_java_boolean(packet.on_ground)?;
+}
             OutPacket::PlayerSleep(packet) => {
                 write.write_u8(17)?;
                 write.write_java_int(packet.entity_id as i32)?;

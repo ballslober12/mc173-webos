@@ -34,7 +34,7 @@ pub fn main() {
 
     ctrlc::set_handler(|| RUNNING.store(false, Ordering::Relaxed)).unwrap();
 
-    let mut server = server::Server::bind("127.0.0.1:25565".parse().unwrap()).unwrap();
+    let mut server = server::Server::bind("0.0.0.0:25565".parse().unwrap()).unwrap();
     server.register_world(format!("overworld"), Dimension::Overworld);
 
     while RUNNING.load(Ordering::Relaxed) {
