@@ -1,170 +1,153 @@
-# mc173-webos -- Minecraft Beta 1.7.3 Server for LG TV (ARMv7)
+To install Rust and set up your environment for ARM cross-compilation, follow these steps:
 
-A Minecraft Beta 1.7.3 server written in **Rust**, patched and tested for LG webOS TV (ARMv7, Linux kernel 3.10+).
+▎Step 1: Install Rust
 
-This is a fork of [theorzr/mc173](https://github.com/theorzr/mc173) with critical fixes for embedded ARM devices.
+1. Open your terminal and run:
 
-**IMPORTANT: This project is written in RUST. You need Rust compiler to build it.**
+      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+   
 
+2. When prompted, select option 1: "Proceed with installation (default)".
 
-## Table of Contents
+3. After installation completes, reload your shell configuration:
 
-1. [What Works / What Doesn't](#what-works--what-doesnt)
-2. [Fixes in this Fork](#fixes-in-this-fork)
-3. [Building for LG TV (RUST) - FULL STEP BY STEP](#building-for-lg-tv-rust---full-step-by-step)
-4. [Running on TV](#running-on-tv)
-5. [Connecting from PC](#connecting-from-pc)
-6. [Commands](#commands)
-7. [Troubleshooting](#troubleshooting)
-8. [Original Project](#original-project)
+      source ~/.cargo/env
+   
 
+4. Verify Rust is installed correctly:
 
-## What Works / What Doesn't
+      rustc --version
+   
 
-| Feature | Status |
-|---------|--------|
-| Player connection, chat, movement | Works |
-| Block breaking / placing | Works |
-| World saving / loading | Works |
-| Inventory (basic) | Works |
-| Crafting table | Works |
-| Chests, furnaces, dispensers | Works |
-| Day/night cycle | Works |
-| Weather (rain/thunder) | Works |
-| Item drops and pickup | Works |
-| Commands (`/help`, `/give`, etc.) | Works |
-| Entity tracking | Works |
-| Mob AI / natural spawning | Not implemented |
-| Redstone (full) | Partial only |
-| Rails | Not implemented |
-| Nether dimension | Overworld only |
-| Player skins | Offline mode only |
+   Expected output example:
 
+      rustc 1.85.0 (4cb91f7a7 2025-02-17)
+   
 
-## Fixes in this Fork (for LG TV)
+5. Verify Cargo is installed:
 
-| Problem | Solution |
-|---------|----------|
-| `entity_id` started from 0 (client rejected) | Changed to start from 1 |
-| Client disconnected after login | Added delays between login packets |
-| Client timed out | Added KeepAlive every 5 seconds |
-| Server only bound to `127.0.0.1` | Changed to `0.0.0.0` for network access |
-| "Bad compressed data format" error | Added zlib fallback decompression |
-| Too many chunks sent at once | Changed to 1 chunk per tick |
-| Binary not found on TV | Added static build instructions |
+      cargo --version
+   
 
+   Expected output example:
 
-## Building for LG TV (RUST) - FULL STEP BY STEP
+      cargo 1.85.0 (4cb91f7a7 2025-02-17)
+   
 
-### Step 1: Install Rust on your PC (WSL or Linux)
+6. If you see command not found, restart your terminal or run:
 
-Open a terminal and run the official Rust installation script. When prompted, select option 1: "Proceed with installation (default)". After installation, reload your shell.
+      echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.bashrc
+   source ~/.bashrc
+   
 
-Verify Rust is installed by checking versions of rustc and cargo.
+▎Step 2: Install ARM Cross-Compilation Target
 
-### Step 2: Install ARM cross-compilation target
+1. Add the ARM target:
 
-Use rustup to add the target: armv7-unknown-linux-gnueabihf. Verify the target is installed by listing installed targets.
+      rustup target add armv7-unknown-linux-gnueabihf
+   
 
-### Step 3: Install GCC cross-compiler for ARM
+   Expected output:
 
-On Ubuntu/Debian, install gcc-arm-linux-gnueabihf via apt. Verify with version check.
+      info: downloading component 'rust-std' for 'armv7-unknown-linux-gnueabihf'
+   info: installing component 'rust-std' for 'armv7-unknown-linux-gnueabihf'
+   
 
-### Step 4: Clone this repository
+2. Verify the target is installed:
 
-Clone the repository using git clone and enter the directory.
+      rustup target list | grep armv7 | grep installed
+   
 
-### Step 5: Configure Cargo for cross-compilation
+   You should see:
 
-Create a .cargo/config.toml file in the project root with the linker set to arm-linux-gnueabihf-gcc.
+      armv7-unknown-linux-gnueabihf (installed)
+   
 
-### Step 6: Build the server (DYNAMIC build)
+▎Step 3: Install GCC Cross-Compiler for ARM
 
-Run cargo build with --release and --target armv7-unknown-linux-gnueabihf. Build takes 2-5 minutes. Binary size is approximately 4-5 MB.
+On Ubuntu/Debian/WSL:
 
-### Step 7: Build the server (STATIC build - RECOMMENDED for LG TV)
+1. Update your package list and install the ARM GCC compiler:
 
-Add the musl target: armv7-unknown-linux-musleabihf. Then build with cargo. Static binary size is approximately 10-15 MB but runs on any ARM Linux without external libraries.
+      sudo apt update
+   sudo apt install gcc-arm-linux-gnueabihf
+   
 
-### Step 8: Locate the compiled binary
+2. Verify installation:
 
-The dynamic binary is located at target/armv7-unknown-linux-gnueabihf/release/mc173-server. The static binary is at target/armv7-unknown-linux-musleabihf/release/mc173-server.
+      arm-linux-gnueabihf-gcc --version
+   
 
-### Step 9: Check binary architecture (important!)
+   Expected output:
 
-Use the file command on the binary. Expected output must contain: ELF 32-bit LSB executable, ARM. If it shows x86-64, the build target is wrong — check Step 2 and Step 5.
+      arm-linux-gnueabihf-gcc (Ubuntu 13.3.0-... 13.3.0)
+   
 
-### Step 10: Copy binary to USB drive
+3. If you see command not found, try:
 
-Copy the binary from the target folder to your USB drive (common mount points: /mnt/e/, /mnt/d/, /mnt/f/, /media/username/).
+      sudo apt install gcc-arm-linux-gnueabihf --fix-missing
+   
 
+▎Step 4: Clone the Repository
 
-## Running on TV
+1. Download the source code:
 
-### Step 1: Copy binary from USB to TV
+      git clone https://github.com/ballslober12/mc173-webos.git
+   cd mc173-webos
+   
 
-Over SSH, navigate to /home/root, create a minecraft_server directory, and copy the binary from the USB path. Common USB paths on LG TV: /media/internal/, /media/usb0/, /tmp/usb/.
+2. Verify you are in the correct directory:
 
-### Step 2: Make binary executable
+      ls -la
+   
 
-Use chmod +x on the binary.
+   You should see files like Cargo.toml, mc173/, mc173-server/, and README.md.
 
-### Step 3: Run the server
+▎Step 5: Configure Cargo for Cross-Compilation
 
-Execute the binary with ./mc173-server.
+1. Create a configuration directory:
 
-### Step 4: Expected output
+      mkdir -p .cargo
+   
 
-If successful, you will see a log line: server bound to 0.0.0.0:25565 followed by chunk loading messages.
+2. Create the config file with proper content:
 
-### Step 5: If "not found" error
+      cat > .cargo/config.toml << 'EOF'
+   [target.armv7-unknown-linux-gnueabihf]
+   linker = "arm-linux-gnueabihf-gcc"
+   EOF
+   
 
-If you get "-sh: ./mc173-server: not found", try running with the dynamic linker directly: /lib/ld-linux.so.3 ./mc173-server. Alternatively, create a symlink to /lib/ld-linux.so.3.
+3. Verify the file was created:
 
-### Step 6: Keep server running in background
+      cat .cargo/config.toml
+   
 
-Use nohup to run the server in the background and redirect output to a log file. View logs with tail. Stop the server with pkill mc173-server.
+   Expected output:
 
+      [target.armv7-unknown-linux-gnueabihf]
+   linker = "arm-linux-gnueabihf-gcc"
+   
 
-## Connecting from PC
+▎Step 6: Build the Server (DYNAMIC Build)
 
-### Step 1: Find TV IP address
+1. Run the build command:
 
-On the TV via SSH, use ip addr show and look for an address like 192.168.1.100.
+      cargo build --release --target armv7-unknown-linux-gnueabihf
+   
 
-Launch Minecraft Beta 1.7.3 on your PC, click Multiplayer, then Direct Connect, and enter the TV's IP address followed by port 25565 (e.g., 192.168.1.100:25565).
+This will take 2-5 minutes depending on your computer speed, and you will see many lines of compilation output.
 
+▎Step 7: Build the Server (STATIC Build - RECOMMENDED)
 
-## Commands
+1. First, add the static musl target:
 
-Supported in-game commands (type in chat with / prefix):
+      rustup target add armv7-unknown-linux-musleabihf
+   
 
-- /help - Show available commands
-- /give <player> <item> [amount] - Give an item
-- /gamemode <0/1> [player] - Change game mode
-- /time <set/add> <value> - Change time of day
-- /stop - Stop the server
-- /list - List online players
+2. Now build with the musl target:
 
+      cargo build --release --target armv7-unknown-linux-musleabihf
+   
 
-## Troubleshooting
-
-**Q: Binary says "not found" even though it exists**  
-A: Missing dynamic libraries. Use the static build (Step 7) or run with /lib/ld-linux.so.3.
-
-**Q: Client connects but immediately disconnects**  
-A: Check that entity_id fix is present in your build (it's in this fork). Also ensure keepalive packets are being sent.
-
-**Q: "Address already in use"**  
-A: Another process is using port 25565. Kill it with pkill mc173-server or change the port in source code.
-
-**Q: World not saving**  
-A: Ensure the server has write permissions to the directory. Run chmod 755 on the server folder.
-
-**Q: High CPU usage on TV**  
-A: Reduce view distance in server.properties (set to 4 or 5). Also verify that only 1 chunk per tick is being sent (this fix is included).
-
-
-## Original Project
-
-This fork is based on [theorzr/mc173](https://github.com/theorzr/mc173). All credit for the original Minecraft Beta 1.7.3 server implementation goes to the original author. This fork only adds ARMv7/LG webOS compatibility fixes.
+This will take longer (3-7 minutes) and produce a larger binary that includes all dependencies inside, making it suitable for any ARM Linux environment without needing external libraries.
