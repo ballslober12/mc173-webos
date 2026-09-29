@@ -1,153 +1,127 @@
-To install Rust and set up your environment for ARM cross-compilation, follow these steps:
+# mc173webos guide 
 
-▎Step 1: Install Rust
+```sh
+sudo apt update
+sudo apt install curl git build-essential
+```
 
-1. Open your terminal and run:
 
-      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-   
+1. Install `rustup`:
 
-2. When prompted, select option 1: "Proceed with installation (default)".
+   ```sh
+   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+   ```
 
-3. After installation completes, reload your shell configuration:
 
-      source ~/.cargo/env
-   
+   ```sh
+   source ~/.cargo/env
+   ```
 
-4. Verify Rust is installed correctly:
+4. Verity the installation:
 
-      rustc --version
-   
+   ```sh
+   rustc --version
+   cargo --version
+   ```
 
-   Expected output example:
 
-      rustc 1.85.0 (4cb91f7a7 2025-02-17)
-   
 
-5. Verify Cargo is installed:
+```sh
+rustup target add armv7-unknown-linux-gnueabihf
+rustup target add armv7-unknown-linux-musleabihf
+```
 
-      cargo --version
-   
+Verity:
 
-   Expected output example:
+```sh
+rustup target list --installed
+```
 
-      cargo 1.85.0 (4cb91f7a7 2025-02-17)
-   
+You should see both `armv7-unknown-linux-gnueabihf` and `armv7-unknown-linux-musleabihf` listed.
 
-6. If you see command not found, restart your terminal or run:
+## Step 3: Install the ARM GCC Cross-Linker
 
-      echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.bashrc
-   source ~/.bashrc
-   
+Rust needs a cross-linker to link ARM binaries.
 
-▎Step 2: Install ARM Cross-Compilation Target
+```sh
+sudo apt install gcc-arm-linux-gnueabihf
+```
 
-1. Add the ARM target:
+Verify:
 
-      rustup target add armv7-unknown-linux-gnueabihf
-   
+```sh
+arm-linux-gnueabihf-gcc --version
+```
 
-   Expected output:
+Example output (the version depends on your distro):
 
-      info: downloading component 'rust-std' for 'armv7-unknown-linux-gnueabihf'
-   info: installing component 'rust-std' for 'armv7-unknown-linux-gnueabihf'
-   
+```text
+arm-linux-gnueabihf-gcc (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0
+```
 
-2. Verify the target is installed:
+If the package cannot be found, run `sudo apt update` and try again.
 
-      rustup target list | grep armv7 | grep installed
-   
+## Step 4: Clone the Repository
 
-   You should see:
+```sh
+git clone https://github.com/ballslober12/mc173-webos.git
+cd mc173-webos
+ls -la
+```
 
-      armv7-unknown-linux-gnueabihf (installed)
-   
+You should see `Cargo.toml`, `mc173/`, `mc173-server/`, and `README.md`.
 
-▎Step 3: Install GCC Cross-Compiler for ARM
+## Step 5: Configure Cargo for Cross-Compilation
 
-On Ubuntu/Debian/WSL:
+Tell Cargo which linker to use for each target:
 
-1. Update your package list and install the ARM GCC compiler:
+```sh
+mkdir -p .cargo
+cat > .cargo/config.toml << 'EOF'
+[target.armv7-unknown-linux-gnueabihf]
+linker = "arm-linux-gnueabihf-gcc"
 
-      sudo apt update
-   sudo apt install gcc-arm-linux-gnueabihf
-   
+[target.armv7-unknown-linux-musleabihf]
+linker = "arm-linux-gnueabihf-gcc"
+EOF
+```
 
-2. Verify installation:
+Verify:
 
-      arm-linux-gnueabihf-gcc --version
-   
+```sh
+cat .cargo/config.toml
+```
 
-   Expected output:
+## Step 6: Build the Server (Dynamic)
 
-      arm-linux-gnueabihf-gcc (Ubuntu 13.3.0-... 13.3.0)
-   
+```sh
+cargo build --release --target armv7-unknown-linux-gnueabihf
+```
 
-3. If you see command not found, try:
+This typically takes a few minutes. The binary is dynamically linked against glibc, so the target device needs a compatible glibc version.
 
-      sudo apt install gcc-arm-linux-gnueabihf --fix-missing
-   
+Output: `target/armv7-unknown-linux-gnueabihf/release/`
 
-▎Step 4: Clone the Repository
+## Step 7: Build the Server (Static, Recommended)
 
-1. Download the source code:
+```sh
+cargo build --release --target armv7-unknown-linux-musleabihf
+```
 
-      git clone https://github.com/ballslober12/mc173-webos.git
-   cd mc173-webos
-   
+This produces a statically linked binary that does not depend on the target's libc, so it runs on most ARMv7 hard-float Linux systems. It may take a few minutes longer than the dynamic build.
 
-2. Verify you are in the correct directory:
+Output: `target/armv7-unknown-linux-musleabihf/release/`
 
-      ls -la
-   
+> **Note:** Pure-Rust dependencies build fine with this setup. If a dependency compiles C code, you may need a musl cross-toolchain or the [`cross`](https://github.com/cross-rs/cross) tool instead.
 
-   You should see files like Cargo.toml, mc173/, mc173-server/, and README.md.
+## Step 8: Verify the Binary
 
-▎Step 5: Configure Cargo for Cross-Compilation
+```sh
+file target/armv7-unknown-linux-musleabihf/release/mc173-server
+```
 
-1. Create a configuration directory:
+The output should mention `ELF 32-bit LSB executable, ARM, EABI5`. Copy the binary to your device (for example with `scp`) and run it there.
 
-      mkdir -p .cargo
-   
+> The binary name above assumes the server crate's binary is called `mc173-server`; check `ls target/<target>/release/` if it differs.
 
-2. Create the config file with proper content:
-
-      cat > .cargo/config.toml << 'EOF'
-   [target.armv7-unknown-linux-gnueabihf]
-   linker = "arm-linux-gnueabihf-gcc"
-   EOF
-   
-
-3. Verify the file was created:
-
-      cat .cargo/config.toml
-   
-
-   Expected output:
-
-      [target.armv7-unknown-linux-gnueabihf]
-   linker = "arm-linux-gnueabihf-gcc"
-   
-
-▎Step 6: Build the Server (DYNAMIC Build)
-
-1. Run the build command:
-
-      cargo build --release --target armv7-unknown-linux-gnueabihf
-   
-
-This will take 2-5 minutes depending on your computer speed, and you will see many lines of compilation output.
-
-▎Step 7: Build the Server (STATIC Build - RECOMMENDED)
-
-1. First, add the static musl target:
-
-      rustup target add armv7-unknown-linux-musleabihf
-   
-
-2. Now build with the musl target:
-
-      cargo build --release --target armv7-unknown-linux-musleabihf
-   
-
-This will take longer (3-7 minutes) and produce a larger binary that includes all dependencies inside, making it suitable for any ARM Linux environment without needing external libraries.
+im sorry i did this readme with claude
