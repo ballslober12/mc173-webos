@@ -1,0 +1,54 @@
+[workspace]
+members = ["mc173", "mc173-server"]
+resolver = "2"
+
+# Release tuning: this server targets an embedded ARM device (webOS TV) with limited
+# CPU and NAND flash storage, so we optimize hard for runtime speed and binary size.
+# `lto = true` + `codegen-units = 1` let the compiler inline and optimize across crate
+# boundaries (chunk gen, NBT/zlib encoding, entity ticking all benefit); `strip = true`
+# drops debug symbols from the final binary, shrinking the file that has to be written
+# to and read back from NAND. `panic = "abort"` is intentionally NOT set: this server
+# spawns several worker threads (network, chunk storage, terrain generation) and, with
+# the default unwinding panic strategy, a bug in one of them only kills that thread
+# instead of the whole process.
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+
+[workspace.package]
+version = "0.2.0"
+edition = "2024"
+readme = "README.md"
+homepage = "https://github.com/mindstorm38/mc173"
+repository = "https://github.com/mindstorm38/mc173"
+license = "Apache-2.0"
+categories = ["games"]
+
+[workspace.dependencies]
+mc173 = { path = "mc173", version = "0.2.0" }
+
+# Network
+mio = { version = "1.0.2", features = ["os-poll", "net"] }
+
+# Sync
+crossbeam-channel = "0.5.14"
+once_cell = "1.20.3"
+
+# Data structures
+indexmap = "2.7.1"
+flate2 = "1.0.35"
+glam = "0.30.0"
+arcstr = "1.2.0"
+
+# Utilities
+thiserror = "2.0.11"
+byteorder = "1.5.0"
+
+# OS
+ctrlc = "3.4.1"
+
+# Tracing
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }

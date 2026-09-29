@@ -1,0 +1,23 @@
+[package]
+name = "mc173"
+description = "Minecraft beta 1.7.3 base data structures and logic for running a world"
+keywords = ["minecraft", "game", "backend"]
+version.workspace = true
+edition.workspace = true
+readme.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
+categories.workspace = true
+
+[dependencies]
+crossbeam-channel.workspace = true
+
+indexmap.workspace = true
+flate2.workspace = true
+glam.workspace = true
+
+thiserror.workspace = true
+byteorder.workspace = true
+
+tracing.workspace = true

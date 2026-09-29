@@ -1,0 +1,29 @@
+[package]
+name = "mc173-server"
+description = "Minecraft beta 1.7.3 protocol and server implementation compatible with Notchian client"
+keywords = ["minecraft", "game", "server"]
+version.workspace = true
+edition.workspace = true
+readme.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
+categories.workspace = true
+
+[dependencies]
+mc173.workspace = true
+
+mio.workspace = true
+
+crossbeam-channel.workspace = true
+once_cell.workspace = true
+
+byteorder.workspace = true
+flate2.workspace = true
+glam.workspace = true
+arcstr.workspace = true
+
+ctrlc.workspace = true
+
+tracing.workspace = true
+tracing-subscriber.workspace = true
